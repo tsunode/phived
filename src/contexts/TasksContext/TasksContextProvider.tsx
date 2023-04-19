@@ -4,23 +4,24 @@ import { incentives } from "src/content";
 import { TasksContext } from "src/contexts/TasksContext/TasksContext";
 import type { Task } from "src/contexts/TasksContext/TasksContext.types";
 import { useLocalStorage } from "src/hooks/useLocalStorage";
+import { usePrevious } from "src/hooks/usePrevious";
 
 export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const [storedTasks, setStoredTasks] = useLocalStorage(
     "persistentTasks",
     Array<string>(5).fill("")
   );
-  const [tasks, setTasks] = useState(storedTasks);
+  // const [tasks, setTasks] = useState(storedTasks);
   const [message, setMessage] = useState<string>("");
   const [timeoutId, setTimeoutId] = useState<undefined | NodeJS.Timeout>(undefined);
 
-  const memoizedTasks = useMemo(() => tasks, [tasks]);
-  const previousTasks = useRef<string[]>([]);
+  // const memoizedTasks = useMemo(() => tasks, [tasks]);
+  const previousTasks = usePrevious<string[]>(storedTasks);
 
   const getRandomIncentive = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const incentive = useMemo(() => getRandomIncentive(incentives), [tasks]);
+  const incentive = useMemo(() => getRandomIncentive(incentives), [storedTasks]);
 
   const displayMessage = useCallback(
     (message: string) => {
@@ -37,44 +38,38 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
 
   const changeTask = useCallback(
     (taskIndex: number, newValue: Task) => {
-      const taskCopy = [...tasks];
+      const taskCopy = [...storedTasks];
       taskCopy[taskIndex] = newValue;
 
-      setTasks(taskCopy);
+      setStoredTasks(taskCopy);
     },
-    [tasks, setTasks]
+    [storedTasks, setStoredTasks]
   );
 
   const completeTask = useCallback(
     (index: number) => {
-      if (!tasks[index]) return;
+      if (!storedTasks[index]) return;
 
-      const ongoingTasks = tasks.filter((_, idx) => idx !== index);
-      setTasks([...ongoingTasks, ""]);
-      previousTasks.current = tasks;
+      const ongoingTasks = storedTasks.filter((_, idx) => idx !== index);
+      setStoredTasks([...ongoingTasks, ""]);
       displayMessage(incentive);
     },
-    [displayMessage, incentive, tasks, setTasks]
+    [displayMessage, incentive, storedTasks, setStoredTasks]
   );
 
   const undoneTask = useCallback(() => {
-    setTasks(previousTasks.current);
-  }, [previousTasks]);
+    previousTasks && setStoredTasks(previousTasks);
+  }, [previousTasks, setStoredTasks]);
 
   const clearTasks = useCallback(() => {
-    setTasks(Array(5).fill(""));
+    setStoredTasks(Array(5).fill(""));
     displayMessage("tasks cleared!");
-  }, [displayMessage, setTasks]);
-
-  useEffect(() => {
-    setStoredTasks(tasks);
-  }, [tasks, setStoredTasks]);
+  }, [displayMessage, setStoredTasks]);
 
   return (
     <TasksContext.Provider
       value={{
-        tasks: memoizedTasks,
-        setTasks,
+        tasks: storedTasks,
         completeTask,
         changeTask,
         clearTasks,
