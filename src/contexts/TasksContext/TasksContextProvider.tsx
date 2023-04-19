@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { incentives } from "src/content";
 import { TasksContext } from "src/contexts/TasksContext/TasksContext";
 import type { Task } from "src/contexts/TasksContext/TasksContext.types";
@@ -15,6 +15,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const [timeoutId, setTimeoutId] = useState<undefined | NodeJS.Timeout>(undefined);
 
   const memoizedTasks = useMemo(() => tasks, [tasks]);
+  const previousTasks = useRef<string[]>([]);
 
   const getRandomIncentive = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -50,10 +51,15 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
 
       const ongoingTasks = tasks.filter((_, idx) => idx !== index);
       setTasks([...ongoingTasks, ""]);
+      previousTasks.current = tasks;
       displayMessage(incentive);
     },
     [displayMessage, incentive, tasks, setTasks]
   );
+
+  const undoneTask = useCallback(() => {
+    setTasks(previousTasks.current);
+  }, [previousTasks]);
 
   const clearTasks = useCallback(() => {
     setTasks(Array(5).fill(""));
@@ -75,6 +81,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         displayMessage,
         message,
         setMessage,
+        undoneTask,
       }}
     >
       {children}
