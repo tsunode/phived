@@ -1,22 +1,14 @@
-import { useMemo, useState } from "react";
-import { placeholders } from "src/content";
+import { useState } from "react";
 import { useTasksContext } from "src/contexts";
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { DragIcon } from "src/components/icons/DragIcon";
+import { Input } from "src/components/Input";
 
 export function Tasks() {
-  const { tasks, changeTask, completeTask, setTasks } = useTasksContext();
+  const { tasks, completeTask, setTasks } = useTasksContext();
   const tasksLength = tasks.filter((t) => t.trim() !== "").length;
   const [dragging, setDragging] = useState(false);
-
-  const getRandomElement = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
-  const placeholder = useMemo(() => getRandomElement(placeholders), []);
-
-  const handleChange = (event: React.FormEvent<HTMLInputElement>, i: number) => {
-    const currentTask = event.currentTarget.value;
-    changeTask(i, currentTask);
-  };
 
   const handleDone = (i: number) => {
     completeTask(i);
@@ -80,23 +72,12 @@ export function Tasks() {
               {...provided.draggableProps}
               ref={provided.innerRef}
             >
-              <input
-                type="text"
-                value={task}
-                onChange={(event) => handleChange(event, idx)}
-                autoFocus={isFirstTask}
-                autoComplete="off"
-                placeholder={`${isFirstTask ? placeholder : `task-${idx + 1}`}`}
-                onKeyDown={(event) => handleKeyDown(event, idx)}
-                className={`peer w-full ${!isEmptyTask && tasksLength > 1 && "group-hover:pr-2"} ${
-                  isFirstTask
-                    ? `rounded-t-2xl ${!isEmptyTask && "focus:rounded-tr-none lg:rounded-tr-none"}`
-                    : "placeholder:text-lighterWhite dark:placeholder:text-darkBlack"
-                } ${
-                  isLastTask
-                    ? `rounded-b-2xl ${!isEmptyTask && "focus:rounded-br-none lg:rounded-br-none"}`
-                    : "border-b"
-                } bg-lighterWhite py-4 px-5 text-darkerBlack placeholder:select-none focus:outline-none dark:bg-darkBlack dark:text-lighterWhite xs:text-lg`}
+              <Input
+                index={idx}
+                initialValue={task}
+                isFirstElement={isFirstTask}
+                isLastElement={isLastTask}
+                hasTask={tasksLength > 1}
               />
               <span
                 /* rbd hardcodes dragHandle tabIndex to 0 by default, hence why this line doesn't work

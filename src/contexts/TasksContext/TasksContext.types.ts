@@ -7,6 +7,7 @@ export type Tasks = Task[];
 export type TaskContextType = {
   tasks: Tasks;
   message: string;
+  setTasks: Dispatch<SetStateAction<TaskContextType["tasks"]>>;
   setMessage: Dispatch<SetStateAction<TaskContextType["message"]>>;
   displayMessage: (incentive: string) => void;
   completeTask: (index: number) => void;
